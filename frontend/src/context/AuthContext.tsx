@@ -57,9 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.post('/login', { email, password })
       const userData = response.data.user
       // Asignar el rol desde roles array
-      userData.role = Array.isArray(response.data.roles) && response.data.roles.length > 0 
-        ? response.data.roles[0] 
-        : 'cliente'
+      if (userData && response.data.roles && Array.isArray(response.data.roles) && response.data.roles.length > 0) {
+        userData.role = typeof response.data.roles[0] === 'string' 
+          ? response.data.roles[0] 
+          : response.data.roles[0].name || 'cliente'
+      } else {
+        userData.role = 'cliente'
+      }
       
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('user', JSON.stringify(userData))

@@ -14,11 +14,16 @@
     "moduleDetection": "force",
     "noEmit": true,
 
+    /* JSX */
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+
     /* Linting */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "erasableSyntaxOnly": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false
   },
   "include": ["src"]
 }

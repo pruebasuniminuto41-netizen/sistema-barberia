@@ -83,11 +83,11 @@ const SupervisorDashboard = () => {
       const productosArray = Object.entries(selectedProductos)
         .filter(([_, cantidad]) => cantidad > 0)
         .map(([productoId, cantidad]) => ({
-          id: Number(productoId),
+          producto_id: Number(productoId),
           cantidad
         }))
 
-      await api.post(`/citas/${citaId}/productos`, { productos: productosArray.map(p => ({ ...p, producto_id: p.producto_id || p.id })) })
+      await api.post(`/citas/${citaId}/productos`, { productos: productosArray })
       fetchCitas()
       setSelectedCita(null)
       setSelectedProductos({})
@@ -100,7 +100,7 @@ const SupervisorDashboard = () => {
   const handleProductoChange = (productoId: number, cantidad: number) => {
     setSelectedProductos(prev => ({
       ...prev,
-      [productoId]: cantidad
+      [productoId]: cantidad || 0
     }))
   }
 
