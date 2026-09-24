@@ -1,0 +1,62 @@
+SISTEMA DE RESERVAS BARBERIA - INSTALACION AUTOMATICA
+=========================================================
+
+INSTALACION EN UN SOLO PASO:
+============================
+
+1. Copia esta carpeta "barberia" a C:\xampp\htdocs\
+
+2. Doble clic en INSTALAR.bat
+   - Verificara automaticamente todos los requisitos
+   - Instalara todas las dependencias necesarias
+   - Configurara la base de datos automaticamente
+   - Creara los usuarios de prueba
+   - Si falta algun requisito, te avisara con instrucciones
+
+3. Doble clic en INICIAR.bat
+   - Iniciara el backend (Laravel) en puerto 8000
+   - Iniciara el frontend (React) en puerto 5173
+   - Abre la URL que aparezca en tu navegador
+
+REQUISITOS (el script los verificara automaticamente):
+=====================================================
+- XAMPP instalado (Apache y MySQL iniciados)
+- Composer instalado
+- Node.js instalado
+
+Si falta algun requisito, el script te dara instrucciones
+para instalarlo antes de continuar.
+
+CREDENCIALES DE ACCESO:
+========================
+- Admin: admin@barberia.com / password
+- Cliente: cliente1@test.com / password
+- Barbero: barbero01@barberia.com / password
+- Supervisor: supervisor0@barberia.com / password
+
+INSTALACION MANUAL:
+==================
+Si el script automatico falla, abre INSTALACION_MANUAL.md
+para instrucciones paso a paso detalladas.
+
+CARACTERISTICAS DEL SISTEMA:
+============================
+- Diseño profesional con glassmorphism y gradientes
+- Sistema de roles: Admin, Supervisor, Barbero, Cliente
+- Reservas de citas con anti-solapamiento
+- Sistema de pagos: efectivo y transferencia
+- Panel de administracion completo
+- Punto de venta (POS) para productos
+- Reportes y metricas en tiempo real
+
+NOTAS IMPORTANTES:
+==================
+- El script verifica que Apache y MySQL esten corriendo
+- Si MySQL tiene contraseña, el script te pedira ingresarla
+- El sistema requiere conexion a internet para descargar dependencias
+- Se recomienda tener al menos 2GB de espacio libre
+
+SOPORTE:
+========
+Si encuentras problemas, revisa INSTALACION_MANUAL.md
+para soluciones a problemas comunes.
