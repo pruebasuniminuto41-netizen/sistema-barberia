@@ -13,6 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        if (\App\Models\User::count() > 0) {
+            return; // ya sembrada: evita duplicados en cada despliegue
+        }
+
         $this->call([
             RoleSeeder::class,
             SedeSeeder::class,
