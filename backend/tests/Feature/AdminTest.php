@@ -18,6 +18,7 @@ class AdminTest extends TestCase
     {
         parent::setUp();
 
+        config(['barberia.dominios_demo' => []]); // en las pruebas sí se "envían" correos a las cuentas de ejemplo
         Carbon::setTestNow(Carbon::parse('2026-11-02 09:00:00', 'America/Bogota'));
         foreach (['Role', 'Sede', 'User', 'Servicio', 'Producto'] as $seeder) {
             $this->seed('Database\\Seeders\\' . $seeder . 'Seeder');

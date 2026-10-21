@@ -24,6 +24,7 @@ class CitasFlujoTest extends TestCase
         parent::setUp();
 
         // Lunes 2 de noviembre de 2026, 09:00 hora de Bogotá
+        config(['barberia.dominios_demo' => []]); // en las pruebas sí se "envían" correos a las cuentas de ejemplo
         Carbon::setTestNow(Carbon::parse('2026-11-02 09:00:00', $this->zona));
         // Datos base del negocio (sin las citas de demostración)
         foreach (['Role', 'Sede', 'User', 'Servicio', 'Producto'] as $seeder) {

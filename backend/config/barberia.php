@@ -18,6 +18,9 @@ return [
     // Destinatario de copia de las reservas (opcional).
     'correo_negocio' => env('BARBERIA_CORREO_NEGOCIO'),
 
+    // Dominios de las cuentas de ejemplo: nunca se les envían correos (son dominios reales de terceros).
+    'dominios_demo' => array_filter(array_map('trim', explode(',', env('BARBERIA_DOMINIOS_DEMO', 'barberia.com,test.com')))),
+
     // Dirección pública del frontend (se usa en los correos).
     'url_frontend' => env('FRONTEND_URL', ''),
 ];
