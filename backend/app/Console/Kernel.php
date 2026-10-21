@@ -15,8 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Enviar recordatorios de citas cada hora
-        $schedule->command('citas:enviar-recordatorios')->hourly();
+        // Enviar recordatorios de citas cada 10 minutos
+        $schedule->command('citas:enviar-recordatorios')->everyTenMinutes();
     }
 
     /**

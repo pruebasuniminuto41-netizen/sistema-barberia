@@ -16,8 +16,7 @@ class ProductoController extends Controller
         if ($user->hasRole('admin')) {
             $productos = Producto::with('sede')->get();
         } elseif ($user->hasRole('supervisor')) {
-            $sedeId = $user->supervisoresSedes()->first()->id;
-            $productos = Producto::where('sede_id', $sedeId)->with('sede')->get();
+            $productos = Producto::whereIn('sede_id', $this->sedesPermitidas($user))->with('sede')->get();
         } else {
             // Clientes y barberos ven productos de su sede
             $sedeId = $user->sede_id;
@@ -25,6 +24,24 @@ class ProductoController extends Controller
         }
 
         return response()->json($productos);
+    }
+
+    /** Sedes sobre las que puede operar el usuario (supervisor: las suyas). */
+    private function sedesPermitidas($user): array
+    {
+        $ids = $user->supervisoresSedes()->pluck('sedes.id')->all();
+
+        return array_map('intval', empty($ids) && $user->sede_id ? [$user->sede_id] : $ids);
+    }
+
+    /** Un supervisor solo puede tocar productos de su propia sede. */
+    private function autorizarSede(Request $request, $sedeId): void
+    {
+        $user = $request->user();
+
+        if ($user->hasRole('supervisor') && !in_array((int) $sedeId, $this->sedesPermitidas($user), true)) {
+            abort(response()->json(['message' => 'No autorizado para esa sede'], 403));
+        }
     }
 
     public function show($id)
@@ -43,6 +60,8 @@ class ProductoController extends Controller
             'sede_id' => 'required|exists:sedes,id',
         ]);
 
+        $this->autorizarSede($request, $request->sede_id);
+
         $producto = Producto::create($request->all());
 
         return response()->json([
@@ -54,6 +73,7 @@ class ProductoController extends Controller
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
+        $this->autorizarSede($request, $producto->sede_id);
 
         $request->validate([
             'nombre' => 'sometimes|string|max:255',
@@ -71,9 +91,10 @@ class ProductoController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
+        $this->autorizarSede($request, $producto->sede_id);
         $producto->delete();
 
         return response()->json([

@@ -1,35 +1,32 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import type { Cita } from '../../types'
+import { errorMessage, estadoInfo, formatFecha, formatHora, money } from '../../utils/helpers'
 
-interface Cita {
-  id: number
-  fecha: string
-  hora_inicio: string
-  hora_fin: string
-  estado: string
-  cliente: {
-    name: string
-    phone: string
-  }
-  servicios: Array<{
-    nombre: string
-  }>
+// Acciones que el barbero puede hacer según el estado de la cita
+const ACCIONES: Record<string, Array<{ estado: string; texto: string; clase: string }>> = {
+  pendiente: [
+    { estado: 'confirmada', texto: 'Confirmar', clase: 'btn-primary' },
+    { estado: 'en_proceso', texto: 'Iniciar', clase: 'btn-primary' },
+    { estado: 'cancelada', texto: 'Cancelar', clase: 'btn-danger' },
+  ],
+  confirmada: [
+    { estado: 'en_proceso', texto: 'Iniciar', clase: 'btn-primary' },
+    { estado: 'cancelada', texto: 'Cancelar', clase: 'btn-danger' },
+  ],
+  en_proceso: [{ estado: 'completada', texto: 'Completar', clase: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-300' }],
 }
+
+const ACTIVAS = ['pendiente', 'pendiente_validacion', 'confirmada', 'en_proceso']
 
 const BarberoDashboard = () => {
   const { user, logout } = useAuth()
-
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error)
-    }
-  }
   const [citas, setCitas] = useState<Cita[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [verHistorial, setVerHistorial] = useState(false)
 
   useEffect(() => {
     fetchCitas()
@@ -38,34 +35,35 @@ const BarberoDashboard = () => {
   const fetchCitas = async () => {
     try {
       const response = await api.get('/citas')
-      // La API ya filtra por rol, así que usamos los datos directamente
+      // La API ya filtra por rol: solo llegan las citas de este barbero
       setCitas(response.data)
+      setError('')
     } catch (err) {
-      setError('Error al cargar citas')
+      setError(errorMessage(err, 'Error al cargar citas'))
     } finally {
       setLoading(false)
     }
   }
 
-  const updateEstado = async (citaId: number, nuevoEstado: string) => {
+  const updateEstado = async (cita: Cita, nuevoEstado: string) => {
+    if (nuevoEstado === 'cancelada' && !window.confirm(`¿Cancelar la cita de ${cita.cliente.name}? Se le avisará por correo.`)) {
+      return
+    }
     try {
-      await api.put(`/citas/${citaId}`, { estado: nuevoEstado })
+      await api.put(`/citas/${cita.id}`, { estado: nuevoEstado })
+      toast.success('Cita actualizada')
       fetchCitas()
     } catch (err) {
-      setError('Error al actualizar estado')
+      toast.error(errorMessage(err, 'Error al actualizar estado'))
     }
   }
 
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case 'pendiente': return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
-      case 'confirmada': return 'bg-green-500/20 text-green-300 border border-green-500/50'
-      case 'en_proceso': return 'bg-blue-500/20 text-blue-300 border border-blue-500/50'
-      case 'completada': return 'bg-gray-500/20 text-gray-300 border border-gray-500/50'
-      case 'cancelada': return 'bg-red-500/20 text-red-300 border border-red-500/50'
-      default: return 'bg-gray-500/20 text-gray-300 border border-gray-500/50'
-    }
-  }
+  // Próximas primero (orden ascendente por fecha y hora); el historial, lo más reciente primero
+  const activas = citas
+    .filter((c) => ACTIVAS.includes(c.estado))
+    .sort((a, b) => `${a.fecha} ${a.hora_inicio}`.localeCompare(`${b.fecha} ${b.hora_inicio}`))
+  const historial = citas.filter((c) => !ACTIVAS.includes(c.estado))
+  const lista = verHistorial ? historial : activas
 
   return (
     <div className="min-h-screen">
@@ -74,10 +72,7 @@ const BarberoDashboard = () => {
           <h1 className="text-2xl font-bold gradient-text">Barbería Pro</h1>
           <div className="flex items-center gap-4">
             <span className="text-gray-300">Hola, {user?.name}</span>
-            <button
-              onClick={logout}
-              className="btn-danger"
-            >
+            <button onClick={logout} className="btn-danger">
               Cerrar Sesión
             </button>
           </div>
@@ -86,7 +81,22 @@ const BarberoDashboard = () => {
 
       <div className="max-w-6xl mx-auto mt-8 p-6">
         <h2 className="text-3xl font-bold text-white mb-6">Mi Agenda</h2>
-        
+
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={() => setVerHistorial(false)}
+            className={`px-4 py-2 rounded-lg transition-all duration-300 ${!verHistorial ? 'btn-primary' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
+          >
+            Próximas ({activas.length})
+          </button>
+          <button
+            onClick={() => setVerHistorial(true)}
+            className={`px-4 py-2 rounded-lg transition-all duration-300 ${verHistorial ? 'btn-primary' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
+          >
+            Historial ({historial.length})
+          </button>
+        </div>
+
         {error && (
           <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-4 backdrop-blur-sm">
             {error}
@@ -95,67 +105,62 @@ const BarberoDashboard = () => {
 
         {loading ? (
           <div className="text-center py-8 text-gray-300">Cargando...</div>
-        ) : citas.length === 0 ? (
+        ) : lista.length === 0 ? (
           <div className="card text-center">
-            <p className="text-gray-300">No tienes citas programadas</p>
+            <p className="text-gray-300">{verHistorial ? 'Aún no tienes citas finalizadas' : 'No tienes citas programadas'}</p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {citas.map(cita => (
+            {lista.map((cita) => (
               <div key={cita.id} className="card">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-white">{cita.cliente.name}</h3>
-                    <p className="text-gray-300">{cita.cliente.phone}</p>
+                    <p className="text-gray-300">{cita.cliente.phone || 'Sin teléfono'}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm backdrop-blur-sm ${getEstadoColor(cita.estado)}`}>
-                    {cita.estado}
+                  <span className={`px-3 py-1 rounded-full text-sm backdrop-blur-sm ${estadoInfo(cita.estado).clase}`}>
+                    {estadoInfo(cita.estado).label}
                   </span>
                 </div>
-                
+
                 <div className="mb-4">
                   <p className="text-gray-300">
-                    <strong className="text-white">Fecha:</strong> {new Date(cita.fecha).toLocaleDateString()}
+                    <strong className="text-white">Fecha:</strong> {formatFecha(cita.fecha)}
                   </p>
                   <p className="text-gray-300">
-                    <strong className="text-white">Hora:</strong> {cita.hora_inicio} - {cita.hora_fin}
+                    <strong className="text-white">Hora:</strong> {formatHora(cita.hora_inicio)} - {formatHora(cita.hora_fin)}
+                  </p>
+                  <p className="text-gray-300">
+                    <strong className="text-white">Sede:</strong> {cita.sede.nombre}
+                  </p>
+                  <p className="text-gray-300">
+                    <strong className="text-white">Total:</strong> {money(cita.monto_total)} ({cita.metodo_pago})
                   </p>
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-gray-300"><strong className="text-white">Servicios:</strong></p>
+                  <p className="text-gray-300">
+                    <strong className="text-white">Servicios:</strong>
+                  </p>
                   <ul className="list-disc list-inside ml-4 text-gray-300">
-                    {cita.servicios.map((servicio, index) => (
-                      <li key={index}>{servicio.nombre}</li>
+                    {cita.servicios.map((servicio) => (
+                      <li key={servicio.id}>{servicio.nombre}</li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="flex gap-2">
-                  {cita.estado === 'pendiente' && (
-                    <button
-                      onClick={() => updateEstado(cita.id, 'en_proceso')}
-                      className="btn-primary text-sm"
-                    >
-                      Iniciar
+                {cita.estado === 'pendiente_validacion' && (
+                  <p className="text-sm text-orange-300">
+                    El pago por transferencia está pendiente de validación por el supervisor. El horario ya está reservado.
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {(ACCIONES[cita.estado] || []).map((accion) => (
+                    <button key={accion.estado} onClick={() => updateEstado(cita, accion.estado)} className={`${accion.clase} text-sm`}>
+                      {accion.texto}
                     </button>
-                  )}
-                  {cita.estado === 'en_proceso' && (
-                    <button
-                      onClick={() => updateEstado(cita.id, 'completada')}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300"
-                    >
-                      Completar
-                    </button>
-                  )}
-                  {cita.estado !== 'cancelada' && cita.estado !== 'completada' && (
-                    <button
-                      onClick={() => updateEstado(cita.id, 'cancelada')}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all duration-300"
-                    >
-                      Cancelar
-                    </button>
-                  )}
+                  ))}
                 </div>
               </div>
             ))}

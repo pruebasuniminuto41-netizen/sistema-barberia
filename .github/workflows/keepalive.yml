@@ -1,0 +1,16 @@
+name: Mantener servidor despierto
+
+# El plan gratuito de Render duerme el servidor tras 15 minutos sin visitas.
+# Este chequeo cada 10 minutos evita la espera inicial y permite que los
+# recordatorios de citas por correo se envien a tiempo.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar /api/health
+        run: curl -fsS --max-time 120 --retry 3 --retry-delay 20 https://sistema-barberia-ff0r.onrender.com/api/health

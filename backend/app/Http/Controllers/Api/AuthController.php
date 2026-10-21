@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Cita;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -119,11 +120,7 @@ class AuthController extends Controller
         $newUser->assignRole($request->role);
 
         // Si es supervisor o barbero, asignar a la sede
-        if ($request->role === 'supervisor' && $request->sede_id) {
-            $newUser->supervisoresSedes()->attach($request->sede_id);
-        } elseif ($request->role === 'barbero' && $request->sede_id) {
-            $newUser->barberosSedes()->attach($request->sede_id);
-        }
+        $this->sincronizarSede($newUser);
 
         return response()->json([
             'user' => $newUser->load('roles', 'sede'),
@@ -160,6 +157,9 @@ class AuthController extends Controller
             $targetUser->syncRoles([$request->role]);
         }
 
+        // La sede y el rol determinan en qué sede atiende o supervisa
+        $this->sincronizarSede($targetUser->fresh());
+
         return response()->json([
             'user' => $targetUser->load('roles', 'sede'),
             'message' => 'Usuario actualizado exitosamente',
@@ -176,8 +176,15 @@ class AuthController extends Controller
 
         $targetUser = User::findOrFail($id);
         
-        if ($targetUser->id === $user->id) {
+        if ((int) $targetUser->id === (int) $user->id) {
             return response()->json(['message' => 'No puedes eliminar tu propio usuario'], 400);
+        }
+
+        // Las citas se borran en cascada con el usuario: se protege el historial de ingresos.
+        if (Cita::where('cliente_id', $targetUser->id)->orWhere('barbero_id', $targetUser->id)->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar: tiene citas registradas. Cambia su contraseña o su rol para quitarle el acceso.',
+            ], 409);
         }
 
         $targetUser->delete();
@@ -185,5 +192,14 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Usuario eliminado exitosamente',
         ]);
+    }
+
+    /** Mantiene barberos_sedes / supervisores_sedes alineadas con el rol y la sede del usuario. */
+    private function sincronizarSede(User $user): void
+    {
+        $sedes = $user->sede_id ? [$user->sede_id] : [];
+
+        $user->barberosSedes()->sync($user->hasRole('barbero') ? $sedes : []);
+        $user->supervisoresSedes()->sync($user->hasRole('supervisor') ? $sedes : []);
     }
 }

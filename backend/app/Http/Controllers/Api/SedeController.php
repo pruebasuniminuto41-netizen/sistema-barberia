@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Sede;
 use App\Models\User;
+use App\Models\Cita;
 
 class SedeController extends Controller
 {
@@ -58,6 +59,14 @@ class SedeController extends Controller
     public function destroy($id)
     {
         $sede = Sede::findOrFail($id);
+
+        // Las citas se borran en cascada con la sede: se protege el historial de ingresos.
+        if (Cita::where('sede_id', $sede->id)->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar la sede: tiene citas registradas.',
+            ], 409);
+        }
+
         $sede->delete();
 
         return response()->json([
@@ -84,7 +93,7 @@ class SedeController extends Controller
             return response()->json(['message' => 'El usuario no tiene rol de barbero'], 400);
         }
 
-        $sede->barberos()->attach($user->id);
+        $sede->barberos()->syncWithoutDetaching([$user->id]);
 
         return response()->json([
             'message' => 'Barbero agregado a la sede',

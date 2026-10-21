@@ -19,6 +19,13 @@ use App\Http\Controllers\Api\SedeController;
 |
 */
 
+// Chequeo de salud: lo usa el monitor que mantiene despierto el servidor gratuito
+Route::get('/health', function () {
+    \Illuminate\Support\Facades\DB::select('select 1');
+
+    return response()->json(['status' => 'ok']);
+});
+
 // Rutas públicas de autenticación
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -48,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/citas/{id}', [CitaController::class, 'show']);
     Route::post('/citas', [CitaController::class, 'store']);
     Route::put('/citas/{id}', [CitaController::class, 'update']);
+    Route::get('/citas/{id}/comprobante', [CitaController::class, 'comprobante']);
+    Route::get('/citas/{id}/calendario', [CitaController::class, 'calendario']);
+    Route::get('/barberos/{id}/disponibilidad', [CitaController::class, 'disponibilidad']);
 
     // Admin y supervisor: productos y validación de comprobantes
     Route::middleware('role:admin|supervisor')->group(function () {

@@ -22,11 +22,5 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# Render define $PORT. Migra, siembra solo si la BD esta vacia y arranca Apache.
-CMD sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
-    && sed -i "s/:80>/:${PORT:-80}>/" /etc/apache2/sites-available/000-default.conf \
-    && php artisan config:clear \
-    && php artisan migrate --force \
-    && (php artisan db:seed --force || true) \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && apache2-foreground
+# Migra, siembra si la BD esta vacia, lanza el programador de recordatorios y arranca Apache.
+CMD ["sh", "/var/www/html/start.sh"]
