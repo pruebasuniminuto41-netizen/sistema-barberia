@@ -432,14 +432,14 @@ class CitaController extends Controller
     public function metricas()
     {
         // Ingresos por sede
-        $ingresosPorSede = Cita::join('sedes', 'citas.sede_id', '=', 'sedes.id')
+        $ingresosPorSede = DB::table('citas')->join('sedes', 'citas.sede_id', '=', 'sedes.id')
             ->selectRaw('sedes.nombre as sede, SUM(citas.monto_total) as total')
             ->where('citas.estado', 'completada')
             ->groupBy('sedes.id', 'sedes.nombre')
             ->get();
 
         // Ingresos por barbero
-        $ingresosPorBarbero = Cita::join('users', 'citas.barbero_id', '=', 'users.id')
+        $ingresosPorBarbero = DB::table('citas')->join('users', 'citas.barbero_id', '=', 'users.id')
             ->selectRaw('users.name as barbero, SUM(citas.monto_total) as total')
             ->where('citas.estado', 'completada')
             ->groupBy('users.id', 'users.name')

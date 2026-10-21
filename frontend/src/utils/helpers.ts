@@ -55,10 +55,22 @@ const descargar = async (ruta: string) => {
 
 /** Abre en otra pestaña un archivo protegido (el comprobante), usando la sesión actual. */
 export const abrirArchivo = async (ruta: string) => {
-  const blob = await descargar(ruta)
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank', 'noopener')
-  setTimeout(() => URL.revokeObjectURL(url), 60000)
+  // La pestaña se abre al instante (dentro del clic) para que el navegador no la bloquee
+  // mientras esperamos al servidor; luego se le carga el archivo.
+  const ventana = window.open('', '_blank')
+  try {
+    const blob = await descargar(ruta)
+    const url = URL.createObjectURL(blob)
+    if (ventana) {
+      ventana.location.href = url
+    } else {
+      window.location.href = url
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    ventana?.close()
+    throw err
+  }
 }
 
 /** Descarga el .ics de una cita para importarlo en cualquier calendario. */
