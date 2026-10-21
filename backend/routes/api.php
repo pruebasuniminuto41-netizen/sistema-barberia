@@ -49,37 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/citas', [CitaController::class, 'store']);
     Route::put('/citas/{id}', [CitaController::class, 'update']);
 
-    // Rutas específicas por rol
-    Route::middleware('role:admin')->group(function () {
-        // CRUD completo para admin
-        Route::post('/sedes', [SedeController::class, 'store']);
-        Route::put('/sedes/{id}', [SedeController::class, 'update']);
-        Route::delete('/sedes/{id}', [SedeController::class, 'destroy']);
-        Route::post('/sedes/{id}/barberos', [SedeController::class, 'agregarBarbero']);
-
-        Route::post('/servicios', [ServicioController::class, 'store']);
-        Route::put('/servicios/{id}', [ServicioController::class, 'update']);
-        Route::delete('/servicios/{id}', [ServicioController::class, 'destroy']);
-
-        Route::post('/productos', [ProductoController::class, 'store']);
-        Route::put('/productos/{id}', [ProductoController::class, 'update']);
-        Route::delete('/productos/{id}', [ProductoController::class, 'destroy']);
-
-        // Gestión de usuarios
-        Route::get('/users', [AuthController::class, 'index']);
-        Route::post('/users', [AuthController::class, 'store']);
-        Route::put('/users/{id}', [AuthController::class, 'update']);
-        Route::delete('/users/{id}', [AuthController::class, 'destroy']);
-
-        // Métricas y reportes
-        Route::get('/admin/metricas', [CitaController::class, 'metricas']);
-
-        // Validación de comprobantes
-        Route::post('/citas/{id}/validar-comprobante', [CitaController::class, 'validarComprobante']);
-    });
-
-    Route::middleware('role:supervisor')->group(function () {
-        // CRUD productos de su sede
+    // Admin y supervisor: productos y validación de comprobantes
+    Route::middleware('role:admin|supervisor')->group(function () {
         Route::post('/productos', [ProductoController::class, 'store']);
         Route::put('/productos/{id}', [ProductoController::class, 'update']);
         Route::delete('/productos/{id}', [ProductoController::class, 'destroy']);
@@ -91,8 +62,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/citas/{id}/validar-comprobante', [CitaController::class, 'validarComprobante']);
     });
 
-    Route::middleware('role:barbero')->group(function () {
-        // Actualizar estado de sus citas
-        Route::put('/citas/{id}', [CitaController::class, 'update']);
+    // Solo admin
+    Route::middleware('role:admin')->group(function () {
+        // CRUD completo para admin
+        Route::post('/sedes', [SedeController::class, 'store']);
+        Route::put('/sedes/{id}', [SedeController::class, 'update']);
+        Route::delete('/sedes/{id}', [SedeController::class, 'destroy']);
+        Route::post('/sedes/{id}/barberos', [SedeController::class, 'agregarBarbero']);
+
+        Route::post('/servicios', [ServicioController::class, 'store']);
+        Route::put('/servicios/{id}', [ServicioController::class, 'update']);
+        Route::delete('/servicios/{id}', [ServicioController::class, 'destroy']);
+
+        // Gestión de usuarios
+        Route::get('/users', [AuthController::class, 'index']);
+        Route::post('/users', [AuthController::class, 'store']);
+        Route::put('/users/{id}', [AuthController::class, 'update']);
+        Route::delete('/users/{id}', [AuthController::class, 'destroy']);
+
+        // Métricas y reportes
+        Route::get('/admin/metricas', [CitaController::class, 'metricas']);
     });
 });

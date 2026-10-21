@@ -88,7 +88,7 @@ class ProductoSeeder extends Seeder
                 ], [
                     'descripcion' => $producto['descripcion'],
                     'precio' => $producto['precio'],
-                    'stock_por_sede' => $producto['stock'],
+                    'stock_por_sede' => $producto['stock_por_sede'],
                 ]);
             }
         }

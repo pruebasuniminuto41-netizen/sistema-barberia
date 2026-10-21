@@ -13,6 +13,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
+    // Spatie debe buscar los roles en el guard 'web' aunque la sesión sea de Sanctum
+    protected $guard_name = 'web';
+
     /**
      * The attributes that are mass assignable.
      *

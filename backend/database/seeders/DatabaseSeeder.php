@@ -14,7 +14,9 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         if (\App\Models\User::count() > 0) {
-            return; // ya sembrada: evita duplicados en cada despliegue
+            // ya sembrada: solo completa productos (idempotente) y evita duplicados
+            $this->call([ProductoSeeder::class]);
+            return;
         }
 
         $this->call([

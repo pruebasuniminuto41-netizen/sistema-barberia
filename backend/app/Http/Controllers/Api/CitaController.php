@@ -138,6 +138,10 @@ class CitaController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
+        if ($user->hasRole('barbero') && $cita->barbero_id !== $user->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         $request->validate([
             'estado' => 'sometimes|in:pendiente,confirmada,en_proceso,completada,cancelada',
             'notas' => 'sometimes|string',
@@ -182,7 +186,7 @@ class CitaController extends Controller
             ]);
 
             // Actualizar stock
-            $producto->decrement('stock', $cantidad);
+            $producto->decrement('stock_por_sede', $cantidad);
         }
 
         $cita->update([
