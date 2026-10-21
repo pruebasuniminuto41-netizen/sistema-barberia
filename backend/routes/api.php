@@ -20,11 +20,7 @@ use App\Http\Controllers\Api\SedeController;
 */
 
 // Chequeo de salud: lo usa el monitor que mantiene despierto el servidor gratuito
-Route::get('/health', function () {
-    \Illuminate\Support\Facades\DB::select('select 1');
-
-    return response()->json(['status' => 'ok']);
-});
+Route::get('/health', \App\Http\Controllers\Api\HealthController::class);
 
 // Rutas públicas de autenticación
 Route::post('/register', [AuthController::class, 'register']);
